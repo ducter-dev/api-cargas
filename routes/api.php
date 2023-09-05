@@ -20,4 +20,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::post('getData', [CargasController::class, 'getCargasIRGE']);
+Route::post('getCargas', [CargasController::class, 'getCargasIRGE']);
+Route::post('getFaltantes', [CargasController::class, 'getFaltantesIRGE']);
