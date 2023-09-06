@@ -278,4 +278,231 @@ class CargasController extends Controller
         }
 
     }
+
+    public function getCargasTPA(Request $request)
+    {
+        try {
+            $fecha = Carbon::parse($request->fecha);
+            $fechaIni = $fecha->format('Y-m-d') . ' 05:00:00';
+            $fechaFin = $fecha->addDay(1)->format('Y-m-d') . ' 05:00:00';
+
+            #   Obtener las cargas de SCADA
+            $cargasSCA = DB::table('Cargas')
+                ->where('HoraFin', '>=', $fechaIni)
+                ->where('HoraFin', '<=', $fechaFin)
+                ->orderBy('HoraFin', 'desc')
+                ->get();
+            $cargas = [];
+            foreach ($cargasSCA as $cargaSCA) {
+                if (floatval($cargaSCA->Masa) > 0) {
+
+                    $llenadera = $cargaSCA->Llenadera;
+                    $pg = $cargaSCA->AT;
+                    $horaEntrada = $cargaSCA->HoraEntrada;
+                    $horaInicio = $cargaSCA->HoraInicio;
+                    $horaFin = $cargaSCA->HoraFin;
+                    $fechaJornada = $request->fecha;
+
+                    $temp = round(floatval($cargaSCA->Temp),2);
+                    $presion = round(floatval($cargaSCA->Presion),3);
+                    $densidad = floatval($cargaSCA->Densidad);
+                    $dens20 = floatval($cargaSCA->Dens20);
+                    $volumen = round(floatval($cargaSCA->Volumen),3);
+                    $vol20 = round(floatval($cargaSCA->Vol20),3);
+                    $porcentaje = round(floatval($cargaSCA->Porcentaje),2);
+                    $masa = floatval($cargaSCA->Masa);
+                    $color = $cargaSCA->Color;
+                    $externalKey = $cargaSCA->ExternalKey;
+                    $notes = $cargaSCA->Notes;
+                    
+                    //$fechaClave = Carbon::parse($horaFin)->format('Ymd');
+                    //$claveLlenado = $fechaClave . $llenadera . $embfolio . $tipoTanque;
+                    
+                    $objCarga = ([
+                        'id_pg' => $pg,
+                        'entrada_llenado' => $horaEntrada,
+                        'inicioCarga_llenado' => $horaInicio,
+                        'finCarga_llenado' => $horaFin,
+                        'fechaRep_llenado' => $fechaJornada,
+                        'densidad_llenado' => $densidad,
+                        'densidad20_llenado' => $dens20,
+                        'temperatura_llenado' => $temp,
+                        'presion_llenado' => $presion,
+                        'masa_llenado' => $masa,
+                        'masaKgs_llenado' => $masa * 1000,
+                        'masaPura_llenado' => $masa,
+                        'volumen_llenado' => $volumen,
+                        'volumen20_llenado' => $vol20,
+                        'volumenPuro' => $volumen,
+                        'volumen20Puro' => $vol20,
+                        'llenadera_llenado' => $llenadera,
+                        'porcentaje_llenado' => $porcentaje,
+                        'capturado_llenado' => 0,
+                        'color' => $color,
+                        'externalKey' => $externalKey,
+                        'notes' => $notes
+                    ]);
+                    
+                    array_push($cargas, $objCarga);
+                }
+            }
+
+            return response()->json([
+                'message' => "Datos leídos correctamente.",
+                'data' => $cargas
+            ],200);
+
+
+        } catch (\Throwable $th) {
+            echo $th;
+        }
+
+    }
+
+    public function getFaltantesTPA(Request $request)
+    {
+        try {
+            $fecha = Carbon::parse($request->fecha);
+            $fechaIni = $fecha->format('Y-m-d') . ' 05:00:00';
+            $fechaFin = $fecha->addDay(1)->format('Y-m-d') . ' 05:00:00';
+            #   Obtener las cargas de SCADA
+            $cargasSCA = DB::table('Cargas')
+                ->where('HoraFin', '>=', $fechaIni)
+                ->where('HoraFin', '<=', $fechaFin)
+                ->orderBy('HoraFin', 'asc')
+                ->get();
+            $cargas = [];
+            //dd($cargasSCA);
+
+            #   Obtener las cargas documentadas del día.
+            $documentados = DB::connection('mysql')
+                ->table('embarques')
+                ->where('fechaRep_llenado', $request->fecha)
+                ->get();
+
+            //dd($documentados);
+            
+            #   Comparar las cargas en documentación contra las reales
+            $faltantes = [];
+            foreach ($cargasSCA as $cargaSCA) {
+                if (floatval($cargaSCA->Masa) > 0)
+                {
+                    $pg = $cargaSCA->AT;
+                    //$folio = intval($cargaSCA->FolioPLC);     #   No tenemos folio en BD
+                    
+                    $exist = false;
+                    foreach ($documentados as $documentado) {
+                        $doc_pg = $documentado->id_pg;
+                        //$doc_folio = $documentado->folioCarga;  # No tenemos folio en BD
+                        $llenadera = $cargaSCA->Llenadera;
+                        $masa= floatval($cargaSCA->Masa);
+                        $doc_masa = $documentado->masa_llenado;
+    
+                        $doc_llenadera = $documentado->llenadera_llenado;
+                        if ($pg === $doc_pg && $llenadera == $doc_llenadera && $masa == $doc_masa) {
+                            $exist = true;
+                            break 1;
+                        }
+                    }
+                    if (!$exist) {
+                        if ($cargaSCA->Masa > 0) {
+                            array_push($faltantes, $cargaSCA);
+                        }
+                    }
+                }
+            }
+
+            $insertados = 0;
+            foreach ($faltantes as $faltante) {
+
+                
+
+                $llenadera = $faltante->Llenadera;
+                $pg = $faltante->AT;
+                $horaEntrada = $faltante->HoraEntrada;
+                $horaInicio = $faltante->HoraInicio;
+                $horaFin = $faltante->HoraFin;
+                $fechaJornada = $request->fecha;
+
+                $temp = round(floatval($faltante->Temp),2);
+                $presion = round(floatval($faltante->Presion),3);
+                $densidad = floatval($faltante->Densidad);
+                $dens20 = floatval($faltante->Dens20);
+                $volumen = round(floatval($faltante->Volumen),3);
+                $vol20 = round(floatval($faltante->Vol20),3);
+                $porcentaje = round(floatval($faltante->Porcentaje),2);
+                $masa = floatval($faltante->Masa);
+                $color = $faltante->Color;
+                $externalKey = $faltante->ExternalKey;
+                $notes = $faltante->Notes;
+
+                $fechaClave = Carbon::parse($horaFin)->format('Ymd');
+
+                $dataLlenadera = $this->getFolioLlenadera($llenadera);
+                $embfolio = $dataLlenadera[0]->folio_llenado + 1;
+                $sufijoLlenadera = substr($llenadera, 5,2);
+                $claveLlenado = $fechaClave . $sufijoLlenadera . $embfolio;
+                $embarque = 0;
+                $contenidoLlenado = 0;
+                $capacidad = 0;
+                $captura = 0;
+
+                $insertado = true;
+                $insertado = DB::connection('mysql')
+                ->table('embarques')
+                ->insert([
+                    'clave_llenado' => $claveLlenado,
+                    'id_pg' => $pg,
+                    'entrada_llenado' => $horaEntrada,
+                    'folioCarga' => $embfolio,
+                    'embarque' => $embarque,
+                    'inicioCarga_llenado' => $horaInicio,
+                    'finCarga_llenado' => $horaFin,
+                    'fechaRep_llenado' => $fechaJornada,
+                    'contenido_llenado' => $contenidoLlenado,
+                    'densidad_llenado' => $densidad,
+                    'densidad20_llenado' => $dens20,
+                    'temperatura_llenado' => $temp,
+                    'presion_llenado' => $presion,
+                    'masa_llenado' => $masa,
+                    'masaKgs_llenado' => $masa * 1000,
+                    'masaPura_llenado' => $masa,
+                    'volumen_llenado' => $volumen,
+                    'volumen20_llenado' => $vol20,
+                    'volumenPuro' => $volumen,
+                    'volumen20Puro' => $vol20,
+                    'llenadera_llenado' => $llenadera,
+                    'porcentaje_llenado' => $porcentaje,
+                    'capacidad90_llenado' => $capacidad,
+                    'capturado_llenado' => $captura,
+                ]);
+
+                if ($insertado) {
+                    $insertados++;
+                } 
+            }
+
+            return response()->json([
+                'message' => "Se insertaron $insertados registros."
+            ],201);
+
+
+        } catch (\Throwable $th) {
+            echo $th;
+        }
+
+    }
+
+
+    public function getFolioLlenadera(string $llenadera)
+    {
+        $folio = DB::connection('mysql')
+            ->table('control_llenado')
+            ->select('folio_llenado')
+            ->where('id_llenadera', $llenadera)
+            ->orderBy('id', 'desc')
+            ->limit(1)
+            ->get();
+        return $folio;
+    }
 }

@@ -20,5 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::post('getCargas', [CargasController::class, 'getCargasIRGE']);
-Route::post('getFaltantes', [CargasController::class, 'getFaltantesIRGE']);
+Route::post('getCargasIRGE', [CargasController::class, 'getCargasIRGE']);
+Route::post('getFaltantesIRGE', [CargasController::class, 'getFaltantesIRGE']);
+Route::post('getCargasTPA', [CargasController::class, 'getCargasTPA']);
+Route::post('getFaltantesTPA', [CargasController::class, 'getFaltantesTPA']);
