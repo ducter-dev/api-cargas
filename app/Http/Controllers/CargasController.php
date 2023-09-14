@@ -51,9 +51,9 @@ class CargasController extends Controller
     
     
     
-                    $embfolio = $cargaSCA->FolioPLC;
+                    $embfolio = intval($cargaSCA->FolioPLC);
                     $numeroLlenadera = "L-" . $cargaSCA->LoadingBayNumber;
-                    $claveLlenado = $fechaBD . $numeroLlenadera . $embfolio . $tipoTanque;
+                    $claveLlenado = $fechaBD . $numeroLlenadera . "-" . $embfolio . $tipoTanque;
                     $pg = trim("PG-" . substr($cargaSCA->TankTruck, 2));
                     $entradaLlenado = "$cargaSCA->EntryYear-$cargaSCA->EntryMonth-$cargaSCA->EntryDay $cargaSCA->EntryTime:00";
                     $embarque = 0;
@@ -64,23 +64,23 @@ class CargasController extends Controller
                     //dd($finCarga);
                     
                     $fechaJornada = $fecha;
-                    $contenidoLlenado = $cargaSCA->LoadVolNat_Lts;
-                    $densidad = floatval("0.$cargaSCA->LoadDensityNat");
-                    $densidad20 = floatval("0.$cargaSCA->LoadDensityCor");
+                    $contenidoLlenado = intval($cargaSCA->LoadVolNat_Lts);
+                    $densidad = floatval("0$cargaSCA->LoadDensityNat");
+                    $densidad20 = floatval("0$cargaSCA->LoadDensityCor");
                     
-                    $temperatura = $cargaSCA->LoadTemp;
-                    $presion = $cargaSCA->LoadPres;
-                    $masa = $cargaSCA->LoadMass_Tons;
+                    $temperatura = floatval($cargaSCA->LoadTemp);
+                    $presion = floatval($cargaSCA->LoadPres);
+                    $masa = floatval($cargaSCA->LoadMass_Tons);
                     $masaKgs = floatval("$cargaSCA->LoadMass_kgs}.000");
-                    $masaPura = $cargaSCA->LoadMass_kgs;
-                    $volumen = $cargaSCA->LoadVolNat_Bls;
-                    $volumen20 = $cargaSCA->LoadVolCor_Bls;
-                    $volumenPuro = $cargaSCA->LoadVolNat_Bls;
-                    $volumen20Puro = $cargaSCA->LoadVolCor_Bls;
+                    $masaPura = intval($cargaSCA->LoadMass_kgs);
+                    $volumen = floatval($cargaSCA->LoadVolNat_Bls);
+                    $volumen20 = floatval($cargaSCA->LoadVolCor_Bls);
+                    $volumenPuro = floatval($cargaSCA->LoadVolNat_Bls);
+                    $volumen20Puro = floatval($cargaSCA->LoadVolCor_Bls);
                     
-                    $porcentajeLlenado = $cargaSCA->LoadPercent;
-                    $capacidad = $cargaSCA->Capacity;
-                    $restante = $cargaSCA->StandardCapacity;
+                    $porcentajeLlenado = floatval($cargaSCA->LoadPercent);
+                    $capacidad = intval($cargaSCA->Capacity);
+                    $restante = intval($cargaSCA->StandardCapacity);
                     $modo = 2;
                     $captura = 1;
                     
@@ -201,7 +201,7 @@ class CargasController extends Controller
 
                 $embfolio = $faltante->FolioPLC;
                 $numeroLlenadera = "L-" . $faltante->LoadingBayNumber;
-                $claveLlenado = $fechaBD . $numeroLlenadera . $embfolio . $tipoTanque;
+                $claveLlenado = $fechaBD . $numeroLlenadera . "-" . $embfolio . $tipoTanque;
                 $pg = trim("PG-" . substr($faltante->TankTruck, 2));
                 $entradaLlenado = "$faltante->EntryYear-$faltante->EntryMonth-$faltante->EntryDay $faltante->EntryTime:00";
                 $embarque = 0;
@@ -213,8 +213,8 @@ class CargasController extends Controller
                 
                 $fechaJornada = $fecha;
                 $contenidoLlenado = $faltante->LoadVolNat_Lts;
-                $densidad = floatval("0.$faltante->LoadDensityNat");
-                $densidad20 = floatval("0.$faltante->LoadDensityCor");
+                $densidad = floatval("0$faltante->LoadDensityNat");
+                $densidad20 = floatval("0$faltante->LoadDensityCor");
                 
                 $temperatura = $faltante->LoadTemp;
                 $presion = $faltante->LoadPres;
@@ -229,6 +229,7 @@ class CargasController extends Controller
                 $porcentajeLlenado = $faltante->LoadPercent;
                 $capacidad = $faltante->Capacity;
                 $restante = $faltante->StandardCapacity;
+                
                 $modo = 2;
                 $captura = 1;
                 $insertado = true;
