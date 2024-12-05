@@ -24,3 +24,4 @@ Route::post('getCargasIRGE', [CargasController::class, 'getCargasIRGE']);
 Route::post('getFaltantesIRGE', [CargasController::class, 'getFaltantesIRGE']);
 Route::post('getCargasTPA', [CargasController::class, 'getCargasTPA']);
 Route::post('getFaltantesTPA', [CargasController::class, 'getFaltantesTPA']);
+Route::post('getCargasIRGE_Periodo', [CargasController::class, 'getCargasIRGE_Periodo']);
