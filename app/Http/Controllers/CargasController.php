@@ -38,52 +38,52 @@ class CargasController extends Controller
                             # code...
                             break;
                     }
-    
+
                     $iniDate = explode('/', $cargaSCA->LoadIniDate);
                     $iniDate_year = $iniDate[2];
                     $iniDate_month = $iniDate[1];
                     $iniDate_day = $iniDate[0];
-    
+
                     $endDate = explode('/', $cargaSCA->LoadEndDate);
                     $endDate_year = $endDate[2];
                     $endDate_month = $endDate[1];
                     $endDate_day = $endDate[0];
-    
-    
-    
-                    $embfolio = intval($cargaSCA->FolioPLC);
+
+
+
+                    $embfolio = $cargaSCA->FolioPLC;
                     $numeroLlenadera = "L-" . $cargaSCA->LoadingBayNumber;
-                    $claveLlenado = $fechaBD . $numeroLlenadera . "-" . $embfolio . $tipoTanque;
+                    $claveLlenado = $fechaBD . $numeroLlenadera . "-". $embfolio . $tipoTanque;
                     $pg = trim("PG-" . substr($cargaSCA->TankTruck, 2));
                     $entradaLlenado = "$cargaSCA->EntryYear-$cargaSCA->EntryMonth-$cargaSCA->EntryDay $cargaSCA->EntryTime:00";
                     $embarque = 0;
-    
+
                     $inicioCarga = "$iniDate_year-$iniDate_month-$iniDate_day $cargaSCA->LoadIniTime:00";
                     //dd($inicioCarga);
                     $finCarga = "$endDate_year-$endDate_month-$endDate_day $cargaSCA->LoadEndTime:00";
                     //dd($finCarga);
-                    
+
                     $fechaJornada = $fecha;
-                    $contenidoLlenado = intval($cargaSCA->LoadVolNat_Lts);
+                    $contenidoLlenado = $cargaSCA->LoadVolNat_Lts;
                     $densidad = floatval("0$cargaSCA->LoadDensityNat");
                     $densidad20 = floatval("0$cargaSCA->LoadDensityCor");
-                    
-                    $temperatura = floatval($cargaSCA->LoadTemp);
-                    $presion = floatval($cargaSCA->LoadPres);
-                    $masa = floatval($cargaSCA->LoadMass_Tons);
+
+                    $temperatura = $cargaSCA->LoadTemp;
+                    $presion = $cargaSCA->LoadPres;
+                    $masa = $cargaSCA->LoadMass_Tons;
                     $masaKgs = floatval("$cargaSCA->LoadMass_kgs}.000");
-                    $masaPura = intval($cargaSCA->LoadMass_kgs);
-                    $volumen = floatval($cargaSCA->LoadVolNat_Bls);
-                    $volumen20 = floatval($cargaSCA->LoadVolCor_Bls);
-                    $volumenPuro = floatval($cargaSCA->LoadVolNat_Bls);
-                    $volumen20Puro = floatval($cargaSCA->LoadVolCor_Bls);
-                    
-                    $porcentajeLlenado = floatval($cargaSCA->LoadPercent);
-                    $capacidad = intval($cargaSCA->Capacity);
-                    $restante = intval($cargaSCA->StandardCapacity);
+                    $masaPura = $cargaSCA->LoadMass_kgs;
+                    $volumen = $cargaSCA->LoadVolNat_Bls;
+                    $volumen20 = $cargaSCA->LoadVolCor_Bls;
+                    $volumenPuro = $cargaSCA->LoadVolNat_Bls;
+                    $volumen20Puro = $cargaSCA->LoadVolCor_Bls;
+
+                    $porcentajeLlenado = $cargaSCA->LoadPercent;
+                    $capacidad = $cargaSCA->Capacity;
+                    $restante = $cargaSCA->StandardCapacity;
                     $modo = 2;
                     $captura = 1;
-                    
+
                     $objCarga = ([
                         'clave_llenado' => $claveLlenado,
                         'id_pg' => $pg,
@@ -112,7 +112,7 @@ class CargasController extends Controller
                         'modo' => $modo,
                         'capturado_llenado' => $captura,
                     ]);
-                    
+
                     array_push($cargas, $objCarga);
                 }
             }
@@ -139,7 +139,6 @@ class CargasController extends Controller
             $cargasSCA = DB::table('TankTrucks')
                 ->where('DiaReporte05', $fechaBD)
                 ->get();
-
             #   Obtener las cargas documentadas del día.
             $documentados = DB::connection('mysql')
                 ->table('embarques')
@@ -152,7 +151,7 @@ class CargasController extends Controller
             foreach ($cargasSCA as $cargaSCA) {
                 $pg = trim("PG-" . substr($cargaSCA->TankTruck, 2));
                 $folio = intval($cargaSCA->FolioPLC);
-                
+
                 $exist = false;
                 foreach ($documentados as $documentado) {
                     $doc_pg = $documentado->id_pg;
@@ -210,12 +209,12 @@ class CargasController extends Controller
                 //dd($inicioCarga);
                 $finCarga = "$endDate_year-$endDate_month-$endDate_day $faltante->LoadEndTime:00";
                 //dd($finCarga);
-                
+
                 $fechaJornada = $fecha;
                 $contenidoLlenado = $faltante->LoadVolNat_Lts;
                 $densidad = floatval("0$faltante->LoadDensityNat");
                 $densidad20 = floatval("0$faltante->LoadDensityCor");
-                
+
                 $temperatura = $faltante->LoadTemp;
                 $presion = $faltante->LoadPres;
                 $masa = $faltante->LoadMass_Tons;
@@ -225,11 +224,10 @@ class CargasController extends Controller
                 $volumen20 = $faltante->LoadVolCor_Bls;
                 $volumenPuro = $faltante->LoadVolNat_Bls;
                 $volumen20Puro = $faltante->LoadVolCor_Bls;
-                
+
                 $porcentajeLlenado = $faltante->LoadPercent;
                 $capacidad = $faltante->Capacity;
                 $restante = $faltante->StandardCapacity;
-                
                 $modo = 2;
                 $captura = 1;
                 $insertado = true;
@@ -266,7 +264,7 @@ class CargasController extends Controller
 
                 if ($insertado) {
                     $insertados++;
-                } 
+                }
             }
 
             return response()->json([
@@ -294,7 +292,6 @@ class CargasController extends Controller
                 ->orderBy('HoraFin', 'desc')
                 ->get();
             $cargas = [];
-            //dd($cargasSCA);
             foreach ($cargasSCA as $cargaSCA) {
                 if (floatval($cargaSCA->Masa) > 0) {
 
@@ -316,10 +313,10 @@ class CargasController extends Controller
                     $color = $cargaSCA->Color;
                     $externalKey = $cargaSCA->ExternalKey;
                     $notes = $cargaSCA->Notes;
-                    
+
                     //$fechaClave = Carbon::parse($horaFin)->format('Ymd');
                     //$claveLlenado = $fechaClave . $llenadera . $embfolio . $tipoTanque;
-                    
+
                     $objCarga = ([
                         'id_pg' => $pg,
                         'entrada_llenado' => $horaEntrada,
@@ -331,7 +328,7 @@ class CargasController extends Controller
                         'temperatura_llenado' => $temp,
                         'presion_llenado' => $presion,
                         'masa_llenado' => $masa,
-                        'masaKgs_llenado' => round($masa * 1000),
+                        'masaKgs_llenado' => $masa * 1000,
                         'masaPura_llenado' => $masa,
                         'volumen_llenado' => $volumen,
                         'volumen20_llenado' => $vol20,
@@ -344,7 +341,7 @@ class CargasController extends Controller
                         'externalKey' => $externalKey,
                         'notes' => $notes
                     ]);
-                    
+
                     array_push($cargas, $objCarga);
                 }
             }
@@ -373,12 +370,8 @@ class CargasController extends Controller
                 ->where('HoraFin', '<=', $fechaFin)
                 ->orderBy('HoraFin', 'asc')
                 ->get();
-
-            $fecha = Carbon::parse($request->fecha);
-            $fechaIni = $fecha->format('Y-m-d') . ' 05:00:00';
-            $fechaFin = $fecha->addDay(1)->format('Y-m-d') . ' 05:00:00';
-            
             $cargas = [];
+            //dd($cargasSCA);
 
             #   Obtener las cargas documentadas del día.
             $documentados = DB::connection('mysql')
@@ -387,7 +380,7 @@ class CargasController extends Controller
                 ->get();
 
             //dd($documentados);
-            
+
             #   Comparar las cargas en documentación contra las reales
             $faltantes = [];
             foreach ($cargasSCA as $cargaSCA) {
@@ -395,7 +388,7 @@ class CargasController extends Controller
                 {
                     $pg = $cargaSCA->AT;
                     //$folio = intval($cargaSCA->FolioPLC);     #   No tenemos folio en BD
-                    
+
                     $exist = false;
                     foreach ($documentados as $documentado) {
                         $doc_pg = $documentado->id_pg;
@@ -403,7 +396,7 @@ class CargasController extends Controller
                         $llenadera = $cargaSCA->Llenadera;
                         $masa= floatval($cargaSCA->Masa);
                         $doc_masa = $documentado->masa_llenado;
-    
+
                         $doc_llenadera = $documentado->llenadera_llenado;
                         if ($pg === $doc_pg && $llenadera == $doc_llenadera && $masa == $doc_masa) {
                             $exist = true;
@@ -421,7 +414,7 @@ class CargasController extends Controller
             $insertados = 0;
             foreach ($faltantes as $faltante) {
 
-                
+
 
                 $llenadera = $faltante->Llenadera;
                 $pg = $faltante->AT;
@@ -485,7 +478,7 @@ class CargasController extends Controller
 
                 if ($insertado) {
                     $insertados++;
-                } 
+                }
             }
 
             return response()->json([
@@ -546,36 +539,36 @@ class CargasController extends Controller
                             # code...
                             break;
                     }
-    
+
                     $iniDate = explode('/', $cargaSCA->LoadIniDate);
                     $iniDate_year = $iniDate[2];
                     $iniDate_month = $iniDate[1];
                     $iniDate_day = $iniDate[0];
-    
+
                     $endDate = explode('/', $cargaSCA->LoadEndDate);
                     $endDate_year = $endDate[2];
                     $endDate_month = $endDate[1];
                     $endDate_day = $endDate[0];
-    
-    
-    
+
+
+
                     $embfolio = intval($cargaSCA->FolioPLC);
                     $numeroLlenadera = "L-" . $cargaSCA->LoadingBayNumber;
                     //$claveLlenado = $fechaBD . $numeroLlenadera . "-" . $embfolio . $tipoTanque;
                     $pg = trim("PG-" . substr($cargaSCA->TankTruck, 2));
                     $entradaLlenado = "$cargaSCA->EntryYear-$cargaSCA->EntryMonth-$cargaSCA->EntryDay $cargaSCA->EntryTime:00";
                     $embarque = 0;
-    
+
                     $inicioCarga = "$iniDate_year-$iniDate_month-$iniDate_day $cargaSCA->LoadIniTime:00";
                     //dd($inicioCarga);
                     $finCarga = "$endDate_year-$endDate_month-$endDate_day $cargaSCA->LoadEndTime:00";
                     //dd($finCarga);
-                    
+
                     //$fechaJornada = $fecha;
                     $contenidoLlenado = intval($cargaSCA->LoadVolNat_Lts);
                     $densidad = floatval("0$cargaSCA->LoadDensityNat");
                     $densidad20 = floatval("0$cargaSCA->LoadDensityCor");
-                    
+
                     $temperatura = floatval($cargaSCA->LoadTemp);
                     $presion = floatval($cargaSCA->LoadPres);
                     $masa = floatval($cargaSCA->LoadMass_Tons);
@@ -585,13 +578,13 @@ class CargasController extends Controller
                     $volumen20 = floatval($cargaSCA->LoadVolCor_Bls);
                     $volumenPuro = floatval($cargaSCA->LoadVolNat_Bls);
                     $volumen20Puro = floatval($cargaSCA->LoadVolCor_Bls);
-                    
+
                     $porcentajeLlenado = floatval($cargaSCA->LoadPercent);
                     $capacidad = intval($cargaSCA->Capacity);
                     $restante = intval($cargaSCA->StandardCapacity);
                     $modo = 2;
                     $captura = 1;
-                    
+
                     $objCarga = ([
                         //'clave_llenado' => $claveLlenado,
                         'id_pg' => $pg,
@@ -620,7 +613,7 @@ class CargasController extends Controller
                         'modo' => $modo,
                         'capturado_llenado' => $captura,
                     ]);
-                    
+
                     array_push($cargas, $objCarga);
                 }
             }
