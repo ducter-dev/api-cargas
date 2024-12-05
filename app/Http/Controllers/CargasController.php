@@ -294,6 +294,7 @@ class CargasController extends Controller
                 ->orderBy('HoraFin', 'desc')
                 ->get();
             $cargas = [];
+            //dd($cargasSCA);
             foreach ($cargasSCA as $cargaSCA) {
                 if (floatval($cargaSCA->Masa) > 0) {
 
@@ -330,7 +331,7 @@ class CargasController extends Controller
                         'temperatura_llenado' => $temp,
                         'presion_llenado' => $presion,
                         'masa_llenado' => $masa,
-                        'masaKgs_llenado' => $masa * 1000,
+                        'masaKgs_llenado' => round($masa * 1000),
                         'masaPura_llenado' => $masa,
                         'volumen_llenado' => $volumen,
                         'volumen20_llenado' => $vol20,
@@ -372,8 +373,12 @@ class CargasController extends Controller
                 ->where('HoraFin', '<=', $fechaFin)
                 ->orderBy('HoraFin', 'asc')
                 ->get();
+
+            $fecha = Carbon::parse($request->fecha);
+            $fechaIni = $fecha->format('Y-m-d') . ' 05:00:00';
+            $fechaFin = $fecha->addDay(1)->format('Y-m-d') . ' 05:00:00';
+            
             $cargas = [];
-            //dd($cargasSCA);
 
             #   Obtener las cargas documentadas del día.
             $documentados = DB::connection('mysql')
