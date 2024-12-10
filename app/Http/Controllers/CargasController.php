@@ -654,6 +654,8 @@ class CargasController extends Controller
             $esferas = [1, 2];
             $nombreEsfera = "";
             $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+
             // $strReportDay = "20240723";
 
             foreach ($esferas as $tanqueEsferico) {
@@ -715,6 +717,7 @@ class CargasController extends Controller
 
                 // Guardar el archivo CSV en el storage de Laravel
                 Storage::put('public/' . $fileName, $csvOutput);
+                Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
             }
 
             return response()->json([
@@ -738,6 +741,7 @@ class CargasController extends Controller
             $esferas = [1, 2];
             $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
             $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             // $fechaHoy = "20240724";
             // $fechaAyer = "20240723";
 
@@ -807,7 +811,7 @@ class CargasController extends Controller
             fclose($csvContent);
 
             // Guardar el archivo CSV en el storage de Laravel
-            Storage::put('public/' . $fileName, $csvOutput);
+            Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
@@ -826,6 +830,7 @@ class CargasController extends Controller
         try {
 
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
 
             $entradas = DB::connection('mysql')
                 ->table('entrada')
@@ -897,7 +902,7 @@ class CargasController extends Controller
             fclose($csvContent);
 
             // Guardar el archivo CSV en el storage de Laravel
-            Storage::put('public/' . $fileName, $csvOutput);
+            Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
@@ -915,6 +920,7 @@ class CargasController extends Controller
     {
         try {
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
 
             DB::connection('mysql')->statement("SET sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''))");
             $entradas = DB::connection('mysql')
@@ -923,7 +929,6 @@ class CargasController extends Controller
                 ->join('companias', 'entrada.compania', '=', 'companias.id')
                 ->leftJoin('subgrupos', 'entrada.subgrupo', '=', 'subgrupos.id')
                 ->select(
-                    // 'entrada.id',
                     'entrada.pg',
                     'companias.nombre as companiaStr',
                     'subgrupos.nombre as subgrupoStr',
@@ -937,15 +942,6 @@ class CargasController extends Controller
                     'entrada.presionTanque',
                     DB::raw("DATE_FORMAT(embarques.inicioCarga_llenado, '%H:%i') AS inicioCarga_llenado"),
                     DB::raw("DATE_FORMAT(entrada.fechaSalida, '%H:%i') AS fechaSalida"),
-                    // 'entrada.fecha',
-                    // 'entrada.nombreDestinatario',
-                    // 'entrada.nombrePorteador',
-                    // 'entrada.compania',
-                    // 'entrada.grupo',
-                    // 'entrada.subgrupo',
-                    // DB::raw("FORMAT(emb.masa_llenado, 3) as masaStr"),
-                    // 'embarques.porcentaje_llenado',
-                    // 'entrada.presion',
                 )
                 ->where('entrada.fechaJornada', $fecha)
                 ->groupBy('entrada.noEmbarque')
@@ -987,7 +983,7 @@ class CargasController extends Controller
             fclose($csvContent);
 
             // Guardar el archivo CSV en el storage de Laravel
-            Storage::put('public/' . $fileName, $csvOutput);
+            Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
@@ -1005,6 +1001,8 @@ class CargasController extends Controller
     {
         try {
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+
             $entradas = DB::connection('mysql')
                 ->table('entrada as E')
                 ->join('grupos as G', 'E.grupo', '=', 'G.id')
@@ -1067,7 +1065,7 @@ class CargasController extends Controller
             fclose($csvContent);
 
             // Guardar el archivo CSV en el storage de Laravel
-            Storage::put('public/' . $fileName, $csvOutput);
+            Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
@@ -1084,8 +1082,9 @@ class CargasController extends Controller
     public function getRDC()
     {
         try {
-            // ->subDay()
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+
             $entradas = DB::connection('mysql')
                 ->table('entrada as e')
                 ->join('embarques as emb', 'e.NoEmbarque', '=', 'emb.embarque')
@@ -1167,7 +1166,7 @@ class CargasController extends Controller
             fclose($csvContent);
 
             // Guardar el archivo CSV en el storage de Laravel
-            Storage::put('public/' . $fileName, $csvOutput);
+            Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
