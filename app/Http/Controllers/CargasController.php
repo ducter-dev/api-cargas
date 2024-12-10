@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CargasController extends Controller
 {
@@ -642,5 +643,541 @@ class CargasController extends Controller
             echo $th;
         }
 
+    }
+
+    /**
+     * Obtiene el inventario de la esfera por jornada
+     */
+    public function getInventarioEsferas()
+    {
+        try {
+            $esferas = [1, 2];
+            $nombreEsfera = "";
+            $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
+            // $strReportDay = "20240723";
+
+            foreach ($esferas as $tanqueEsferico) {
+
+                $datos = DB::table('ValEsferas')
+                    ->select(
+                        'Esfera',
+                        'Fecha',
+                        'Tiempo',
+                        'BLSNat as VOL_NAT',
+                        'BLSCor as VOL_COR',
+                        'VolTon as MASA',
+                        'DensidadNat as DENSIDADNAT',
+                        'DensidadCor as DENSIDADCOR',
+                        'Temp as TEMP',
+                        'Presion as PRESION',
+                        'Nivel as NIVEL',
+                        'Porcentaje as PORCENTAJE'
+                    )
+                    ->where('Esfera', $tanqueEsferico)
+                    ->where('DiaReporte05', $strReportDay)
+                    ->orderBy('EntryID', 'asc')
+                    ->get()
+                    ->toArray();
+
+
+                $nombreEsfera = $tanqueEsferico == 1 ? "TE-301A" : "TE-301B";
+                $fileName = 'inventario_esfera_' . $nombreEsfera . '_' . $strReportDay . '.csv';
+
+                // Crear contenido del CSV en memoria
+                $csvContent = fopen('php://temp', 'r+');
+
+                // Encabezados del CSV
+                $headers = [
+                    'Esfera',
+                    'Fecha',
+                    'Tiempo',
+                    'VOL_NAT',
+                    'VOL_COR',
+                    'MASA',
+                    'DENSIDADNAT',
+                    'DENSIDADCOR',
+                    'TEMP',
+                    'PRESION',
+                    'NIVEL',
+                    'PORCENTAJE',
+                ];
+                fputcsv($csvContent, $headers);
+
+                // Agregar los datos al contenido del CSV
+                foreach ($datos as $row) {
+                    fputcsv($csvContent, (array) $row);
+                }
+
+                // Rebobinar el contenido del CSV y obtenerlo como string
+                rewind($csvContent);
+                $csvOutput = stream_get_contents($csvContent);
+                fclose($csvContent);
+
+                // Guardar el archivo CSV en el storage de Laravel
+                Storage::put('public/' . $fileName, $csvOutput);
+            }
+
+            return response()->json([
+                "message" => 'Archivos generados correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtiene el ultimo registro de la jornada anterior, actual y muestra sus diferencias
+     */
+    public function getTotalInvEsferas()
+    {
+        try {
+            $esferas = [1, 2];
+            $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
+            $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
+            // $fechaHoy = "20240724";
+            // $fechaAyer = "20240723";
+
+            $content = [];
+            $counter = 1;
+            foreach ($esferas as $tanqueEsferico) {
+                $nombreEsfera = $tanqueEsferico == 1 ? "TE-301A" : "TE-301B";
+
+                $datosAyer = DB::table('ValEsferas')
+                    ->select('BLSNat', 'BLSCor', 'VolTon')
+                    ->where('DiaReporte05', $fechaAyer)
+                    ->where('Esfera', $tanqueEsferico)
+                    ->orderBy('EntryID', 'DESC')
+                    ->first();
+
+                $content[$counter]['esfera'] = $nombreEsfera;
+                $content[$counter]['VolNatAyer'] = $datosAyer->BLSNat;
+                $content[$counter]['VolCorAyer'] = $datosAyer->BLSCor;
+                $content[$counter]['TonAyer'] = $datosAyer->VolTon;
+
+                $datosHoy = DB::table('ValEsferas')
+                    ->select('BLSNat', 'BLSCor', 'VolTon')
+                    ->where('DiaReporte05', $fechaHoy)
+                    ->where('Esfera', $tanqueEsferico)
+                    ->orderBy('EntryID', 'DESC')
+                    ->first();
+
+                $content[$counter]['VolNatHoy'] = $datosHoy->BLSNat;
+                $content[$counter]['VolCorHoy'] = $datosHoy->BLSCor;
+                $content[$counter]['TonHoy'] = $datosHoy->VolTon;
+
+                $content[$counter]['difNat'] = $datosHoy->BLSNat - $datosAyer->BLSNat;
+                $content[$counter]['difCor'] = $datosHoy->BLSCor - $datosAyer->BLSCor;
+                $content[$counter]['difTon'] = $datosHoy->VolTon - $datosAyer->VolTon;
+
+                $counter++;
+            }
+
+            $fileName = 'total_inventario_esferas_' . $fechaHoy . '.csv';
+
+            // Crear contenido del CSV en memoria
+            $csvContent = fopen('php://temp', 'r+');
+
+            // Encabezados del CSV
+            $headers = [
+                'Esfera',
+                'VolNatAyer',
+                'VolCorAyer',
+                'TonAyer',
+                'VolNatHoy',
+                'VolCorHoy',
+                'TonHoy',
+                'difNat',
+                'difCor',
+                'difTon',
+            ];
+            fputcsv($csvContent, $headers);
+
+            // Agregar los datos al contenido del CSV
+            foreach ($content as $row) {
+                fputcsv($csvContent, (array) $row);
+            }
+
+            // Rebobinar el contenido del CSV y obtenerlo como string
+            rewind($csvContent);
+            $csvOutput = stream_get_contents($csvContent);
+            fclose($csvContent);
+
+            // Guardar el archivo CSV en el storage de Laravel
+            Storage::put('public/' . $fileName, $csvOutput);
+
+            return response()->json([
+                "message" => 'Archivo generado correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getSellos()
+    {
+        try {
+
+            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+
+            $entradas = DB::connection('mysql')
+                ->table('entrada')
+                ->where('entrada.fechaJornada', $fecha)
+                ->join('accesos', 'entrada.noEmbarque', '=', 'accesos.embarque')
+                ->join('subgrupos', 'entrada.subgrupo', '=', 'subgrupos.id')
+                ->join('companias', 'entrada.compania', '=', 'companias.id')
+                ->select(
+                    'entrada.pg',
+                    'accesos.id as idAcceso',
+                    DB::raw("DATE_FORMAT(entrada.fechaJornada, '%W %d de %M de %Y') as fechaJ"),
+                    'entrada.subgrupo as idSubgrupo',
+                    'subgrupos.nombre as subgrupo',
+                    'entrada.compania as idCompania',
+                    'companias.nombre as compania'
+                )
+                ->orderBy('entrada.id', 'asc')
+                // ->take(1)
+                ->get();
+
+            $content = [];
+            $counter = 0;
+            foreach ($entradas as $entrada) {
+
+                $sellos = DB::connection('mysql')
+                    ->table('sellos')
+                    ->where('id_accesos', $entrada->idAcceso)
+                    ->get();
+
+                $sellosLargos = $sellos->where('tipo', 1)->pluck('sello');
+                $sellosCortos = $sellos->where('tipo', 0)->pluck('sello');
+
+                $content[$counter]['pg'] = $entrada->pg;
+                $content[$counter]['subgrupo'] = $entrada->subgrupo;
+                $content[$counter]['compania'] = $entrada->compania;
+                $content[$counter]['sellosLargos'] = $sellosLargos->implode(', ');
+                $content[$counter]['sellosCortos'] = $sellosCortos->implode(', ');
+                $content[$counter]['cantidadSellosLargos'] = count($sellosLargos);
+                $content[$counter]['cantidadSellosCortos'] = count($sellosCortos);
+
+                $counter++;
+            }
+
+            $fileName = 'reporte_sellos_' . $fecha . '.csv';
+
+            // Crear contenido del CSV en memoria
+            $csvContent = fopen('php://temp', 'r+');
+
+            // Encabezados del CSV
+            $headers = [
+                'pg',
+                'subgrupo',
+                'compania',
+                'sellosLargos',
+                'sellosCortos',
+                'cantidadSellosLargos',
+                'cantidadSellosCortos',
+            ];
+            fputcsv($csvContent, $headers);
+
+            // Agregar los datos al contenido del CSV
+            foreach ($content as $row) {
+                fputcsv($csvContent, (array) $row);
+            }
+
+            // Rebobinar el contenido del CSV y obtenerlo como string
+            rewind($csvContent);
+            $csvOutput = stream_get_contents($csvContent);
+            fclose($csvContent);
+
+            // Guardar el archivo CSV en el storage de Laravel
+            Storage::put('public/' . $fileName, $csvOutput);
+
+            return response()->json([
+                "message" => 'Archivo generado correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getCompanias()
+    {
+        try {
+            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+
+            DB::connection('mysql')->statement("SET sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''))");
+            $entradas = DB::connection('mysql')
+                ->table('entrada')
+                ->join('embarques', 'entrada.NoEmbarque', '=', 'embarques.embarque')
+                ->join('companias', 'entrada.compania', '=', 'companias.id')
+                ->leftJoin('subgrupos', 'entrada.subgrupo', '=', 'subgrupos.id')
+                ->select(
+                    // 'entrada.id',
+                    'entrada.pg',
+                    'companias.nombre as companiaStr',
+                    'subgrupos.nombre as subgrupoStr',
+                    'entrada.noEmbarque',
+                    'entrada.masa',
+                    'embarques.densidad_llenado as densidad',
+                    'embarques.densidad20_llenado as densidad20',
+                    'embarques.volumen_llenado as volumen',
+                    'embarques.volumen20_llenado as volumen20',
+                    DB::raw("CONCAT(entrada.magnatel, '','%') AS magnatel"),
+                    'entrada.presionTanque',
+                    DB::raw("DATE_FORMAT(embarques.inicioCarga_llenado, '%H:%i') AS inicioCarga_llenado"),
+                    DB::raw("DATE_FORMAT(entrada.fechaSalida, '%H:%i') AS fechaSalida"),
+                    // 'entrada.fecha',
+                    // 'entrada.nombreDestinatario',
+                    // 'entrada.nombrePorteador',
+                    // 'entrada.compania',
+                    // 'entrada.grupo',
+                    // 'entrada.subgrupo',
+                    // DB::raw("FORMAT(emb.masa_llenado, 3) as masaStr"),
+                    // 'embarques.porcentaje_llenado',
+                    // 'entrada.presion',
+                )
+                ->where('entrada.fechaJornada', $fecha)
+                ->groupBy('entrada.noEmbarque')
+                ->orderBy('entrada.noEmbarque', 'asc')
+                ->get()
+                ->toArray();
+
+            $fileName = 'reporte_companias_' . $fecha . '.csv';
+
+            // Crear contenido del CSV en memoria
+            $csvContent = fopen('php://temp', 'r+');
+
+            // Encabezados del CSV
+            $headers = [
+                'pg',
+                'companiaStr',
+                'subgrupoStr',
+                'noEmbarque',
+                'masa',
+                'densidad',
+                'densidad20',
+                'volumen',
+                'volumen20',
+                'magnatel',
+                'presionTanque',
+                'inicioCarga_llenado',
+                'fechaSalida',
+            ];
+            fputcsv($csvContent, $headers);
+
+            // Agregar los datos al contenido del CSV
+            foreach ($entradas as $row) {
+                fputcsv($csvContent, (array) $row);
+            }
+
+            // Rebobinar el contenido del CSV y obtenerlo como string
+            rewind($csvContent);
+            $csvOutput = stream_get_contents($csvContent);
+            fclose($csvContent);
+
+            // Guardar el archivo CSV en el storage de Laravel
+            Storage::put('public/' . $fileName, $csvOutput);
+
+            return response()->json([
+                "message" => 'Archivo generado correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getCargasDiarias()
+    {
+        try {
+            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $entradas = DB::connection('mysql')
+                ->table('entrada as E')
+                ->join('grupos as G', 'E.grupo', '=', 'G.id')
+                // ->join('subgrupos as SG', 'E.subgrupo', '=', 'SG.id')
+                ->join('embarques as EQ', 'E.noEmbarque', '=', 'EQ.embarque')
+                // ->join('companias as c', 'E.compania', '=', 'c.id')
+                ->select(
+                    // 'E.id',
+                    'E.pg',
+                    'E.nombrePorteador as transportista',
+                    'G.nombre as grupo',
+                    'E.nombreDestinatario as destino',
+                    'E.noEmbarque',
+                    'E.masa',
+                    'E.densidad',
+                    'E.volumen',
+                    DB::raw("CONCAT(E.magnatel, ' %') AS porcentaje"),
+                    'E.presionTanque',
+                    DB::raw("DATE_FORMAT(EQ.inicioCarga_llenado, '%H:%i') AS inicio"),
+                    DB::raw("DATE_FORMAT(EQ.finCarga_llenado, '%H:%i') AS fin"),
+                    // 'E.subgrupo as id_subgrupo',
+                    // 'SG.nombre as subgrupo',
+                    // 'c.nombre as compania'
+                )
+                ->where('E.fechaJornada', $fecha)
+                ->orderBy('E.id')
+                ->get()
+                ->toArray();
+
+            $fileName = 'reporte_cargas_diarias_' . $fecha . '.csv';
+
+            // Crear contenido del CSV en memoria
+            $csvContent = fopen('php://temp', 'r+');
+
+            // Encabezados del CSV
+            $headers = [
+                'pg',
+                'transportista',
+                'grupo',
+                'destino',
+                'noEmbarque',
+                'masa',
+                'densidad',
+                'volumen',
+                'porcentaje',
+                'presionTanque',
+                'inicio',
+                'fin',
+            ];
+            fputcsv($csvContent, $headers);
+
+            // Agregar los datos al contenido del CSV
+            foreach ($entradas as $row) {
+                fputcsv($csvContent, (array) $row);
+            }
+
+            // Rebobinar el contenido del CSV y obtenerlo como string
+            rewind($csvContent);
+            $csvOutput = stream_get_contents($csvContent);
+            fclose($csvContent);
+
+            // Guardar el archivo CSV en el storage de Laravel
+            Storage::put('public/' . $fileName, $csvOutput);
+
+            return response()->json([
+                "message" => 'Archivo generado correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getRDC()
+    {
+        try {
+            // ->subDay()
+            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+            $entradas = DB::connection('mysql')
+                ->table('entrada as e')
+                ->join('embarques as emb', 'e.NoEmbarque', '=', 'emb.embarque')
+                ->join('subgrupos as s', 'e.subgrupo', '=', 's.id')
+                ->join('companias as c', 'e.compania', '=', 'c.id')
+                ->select(
+                    'e.pg',
+                    'e.nombrePorteador',
+                    'c.nombre AS compania',
+                    's.nombre AS subgrupo',
+                    'e.nombreDestinatario',
+                    'e.noEmbarque',
+                    'e.masa',
+                    'emb.densidad_llenado as densidad',
+                    'e.densidad AS densidad20',
+                    'emb.volumen_llenado AS volumen',
+                    'e.volumen AS volumen20',
+                    DB::raw('ROUND((e.masa / e.densidad)) AS litros'),
+                    DB::raw('ROUND((e.masa / e.densidad) * 0.264172, 2) AS galones'),
+                    DB::raw("CONCAT(e.magnatel, '%') AS magnatel"),
+                    DB::raw('FORMAT(e.presionTanque, 1, 0) AS presionTanque'),
+                    DB::raw("IFNULL((SELECT DATE_FORMAT(fechaLlegada, '%H:%i') FROM accesos WHERE embarque = e.noEmbarque LIMIT 1), '') AS fechaLlegada"),
+                    DB::raw("DATE_FORMAT(emb.inicioCarga_llenado, '%H:%i') as inicioCarga"),
+                    DB::raw("DATE_FORMAT(emb.finCarga_llenado, '%H:%i') as finCarga"),
+                    DB::raw("DATE_FORMAT(e.fechaSalida, '%H:%i') as fechaDoc"),
+                    DB::raw('TIMEDIFF(e.fechaSalida, emb.finCarga_llenado) AS diferenciaTiempo'),
+                )
+                ->where('e.fechaJornada', $fecha)
+                ->orderBy('e.id', 'asc')
+                ->get()
+                ->toArray();
+
+            $fileName = 'reporte_rdc_' . $fecha . '.csv';
+
+            // Crear contenido del CSV en memoria
+            $csvContent = fopen('php://temp', 'r+');
+
+            // Encabezados del CSV
+            $headers = [
+                'pg',
+                'nombrePorteador',
+                'compania',
+                'subgrupo',
+                'nombreDestinatario',
+                'noEmbarque',
+                'masa',
+                'densidad',
+                'densidad20',
+                'volumen',
+                'volumen20',
+                'litros',
+                'galones',
+                'magnatel',
+                'presionTanque',
+                'fechaLlegada',
+                'inicioCarga',
+                'finCarga',
+                'fechaDoc',
+                'diferenciaTiempo',
+                'fechaSalida',
+                'finCarga_llenado',
+                'idCompania',
+                'grupo',
+                'idSubgrupo',
+                'presion',
+                'masaStr',
+                'fechaJ',
+            ];
+            fputcsv($csvContent, $headers);
+
+            // Agregar los datos al contenido del CSV
+            foreach ($entradas as $row) {
+                fputcsv($csvContent, (array) $row);
+            }
+
+            // Rebobinar el contenido del CSV y obtenerlo como string
+            rewind($csvContent);
+            $csvOutput = stream_get_contents($csvContent);
+            fclose($csvContent);
+
+            // Guardar el archivo CSV en el storage de Laravel
+            Storage::put('public/' . $fileName, $csvOutput);
+
+            return response()->json([
+                "message" => 'Archivo generado correctamente.',
+                "status" => 200
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Error al generar el archivo CSV.',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
     }
 }
