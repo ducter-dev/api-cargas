@@ -655,7 +655,7 @@ class CargasController extends Controller
             $nombreEsfera = "";
             $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
-
+            $filenames = [];
             // $strReportDay = "20240723";
 
             foreach ($esferas as $tanqueEsferico) {
@@ -684,7 +684,7 @@ class CargasController extends Controller
 
                 $nombreEsfera = $tanqueEsferico == 1 ? "TE-301A" : "TE-301B";
                 $fileName = 'inventario_esfera_' . $nombreEsfera . '_' . $strReportDay . '.csv';
-
+                $filenames [] = $fileName;
                 // Crear contenido del CSV en memoria
                 $csvContent = fopen('php://temp', 'r+');
 
@@ -721,7 +721,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivos generados correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames,
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -741,6 +742,7 @@ class CargasController extends Controller
             $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
             $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            $filenames = [];
             // $fechaHoy = "20240724";
             // $fechaAyer = "20240723";
 
@@ -780,7 +782,7 @@ class CargasController extends Controller
             }
 
             $fileName = 'total_inventario_esferas_' . $fechaHoy . '.csv';
-
+            $filenames [] = $fileName;
             // Crear contenido del CSV en memoria
             $csvContent = fopen('php://temp', 'r+');
 
@@ -814,7 +816,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -830,6 +833,7 @@ class CargasController extends Controller
 
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            $filenames = [];
 
             $entradas = DB::connection('mysql')
                 ->table('entrada')
@@ -874,7 +878,7 @@ class CargasController extends Controller
             }
 
             $fileName = 'reporte_sellos_' . $fecha . '.csv';
-
+            $filenames [] = $fileName;
             // Crear contenido del CSV en memoria
             $csvContent = fopen('php://temp', 'r+');
 
@@ -905,7 +909,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -920,6 +925,7 @@ class CargasController extends Controller
         try {
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            $filenames = [];
 
             DB::connection('mysql')->statement("SET sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''))");
             $entradas = DB::connection('mysql')
@@ -949,6 +955,7 @@ class CargasController extends Controller
                 ->toArray();
 
             $fileName = 'reporte_companias_' . $fecha . '.csv';
+            $filenames [] = $fileName;
 
             // Crear contenido del CSV en memoria
             $csvContent = fopen('php://temp', 'r+');
@@ -986,7 +993,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -1001,6 +1009,7 @@ class CargasController extends Controller
         try {
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            $filenames = [];
 
             $entradas = DB::connection('mysql')
                 ->table('entrada as E')
@@ -1032,6 +1041,7 @@ class CargasController extends Controller
                 ->toArray();
 
             $fileName = 'reporte_cargas_diarias_' . $fecha . '.csv';
+            $filenames [] = $fileName;
 
             // Crear contenido del CSV en memoria
             $csvContent = fopen('php://temp', 'r+');
@@ -1068,7 +1078,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
@@ -1083,6 +1094,7 @@ class CargasController extends Controller
         try {
             $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
             $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            $filenames = [];
 
             $entradas = DB::connection('mysql')
                 ->table('entrada as e')
@@ -1117,6 +1129,7 @@ class CargasController extends Controller
                 ->toArray();
 
             $fileName = 'reporte_rdc_' . $fecha . '.csv';
+            $filenames [] = $fileName;
 
             // Crear contenido del CSV en memoria
             $csvContent = fopen('php://temp', 'r+');
@@ -1169,7 +1182,8 @@ class CargasController extends Controller
 
             return response()->json([
                 "message" => 'Archivo generado correctamente.',
-                "status" => 200
+                "status" => 200,
+                "files" => $filenames
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
