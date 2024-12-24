@@ -716,7 +716,6 @@ class CargasController extends Controller
                 fclose($csvContent);
 
                 // Guardar el archivo CSV en el storage de Laravel
-                Storage::put('public/' . $fileName, $csvOutput);
                 Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
             }
 
