@@ -86,6 +86,18 @@ class ExecuteFunctionsCSV extends Command
                     ->send(new Notification($allFilenames));
                 Log::info("Correo enviado con " . count($allFilenames) . " archivos adjuntos.");
 
+                $summaryResponse = Http::post(env('EXTERNAL_API_URL'), [
+                    'date' => $date,
+                    'location' => 'IRGE',
+                    'file_count' => count($allFilenames),
+                ]);
+
+                if (!$summaryResponse->successful()) {
+                    Log::warning("No se pudo registrar el resumen en la API externa. Respuesta: " . $summaryResponse->body());
+                } else {
+                    Log::info("Resumen registrado en la API externa.");
+                }
+
             } else {
                 Log::warning("No se generaron archivos para enviar por correo.");
             }
