@@ -81,12 +81,14 @@ class ExecuteFunctionsCSV extends Command
             Log::info("Archivos generados: " . print_r($allFilenames, true));
 
             if (!empty($allFilenames)) { // Verifica si hay archivos para enviar por correo
-                Mail::to(env('MAIL_RECEIVER_ADDRESS'))
-                    ->cc(env('MAIL_CC_ADDRESS'))
-                    ->send(new Notification($allFilenames));
+                // Mail::to(env('MAIL_RECEIVER_ADDRESS'))
+                //     ->cc(env('MAIL_CC_ADDRESS'))
+                //     ->send(new Notification($allFilenames));
                 Log::info("Correo enviado con " . count($allFilenames) . " archivos adjuntos.");
 
-                $summaryResponse = Http::post(env('EXTERNAL_API_URL'), [
+                $summaryResponse = Http::withHeaders([
+                    'app_key' => env('EXTERNAL_APP_KEY'),
+                ])->post(env('EXTERNAL_API_URL'), [
                     'date' => $date,
                     'location' => 'IRGE',
                     'file_count' => count($allFilenames),
