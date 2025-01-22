@@ -37,7 +37,6 @@ class ExecuteFunctionsCSV extends Command
         $allFilenames = [];
 
         // Array asociativo con las funciones y sus rutas nombradas.
-        // ¡Recuerda definir estas rutas en routes/web.php o api.php!
         $functions = [
             'getInventarioEsferas' => 'getInventarioEsferas',
             'getTotalInvEsferas' => 'getTotalInvEsferas',
@@ -81,24 +80,10 @@ class ExecuteFunctionsCSV extends Command
             Log::info("Archivos generados: " . print_r($allFilenames, true));
 
             if (!empty($allFilenames)) { // Verifica si hay archivos para enviar por correo
-                // Mail::to(env('MAIL_RECEIVER_ADDRESS'))
-                //     ->cc(env('MAIL_CC_ADDRESS'))
-                //     ->send(new Notification($allFilenames));
+                Mail::to(env('MAIL_RECEIVER_ADDRESS'))
+                    ->cc(env('MAIL_CC_ADDRESS'))
+                    ->send(new Notification($allFilenames));
                 Log::info("Correo enviado con " . count($allFilenames) . " archivos adjuntos.");
-
-                $summaryResponse = Http::withHeaders([
-                    'app_key' => env('EXTERNAL_APP_KEY'),
-                ])->post(env('EXTERNAL_API_URL'), [
-                    'date' => $date,
-                    'location' => 'IRGE',
-                    'file_count' => count($allFilenames),
-                ]);
-
-                if (!$summaryResponse->successful()) {
-                    Log::warning("No se pudo registrar el resumen en la API externa. Respuesta: " . $summaryResponse->body());
-                } else {
-                    Log::info("Resumen registrado en la API externa.");
-                }
 
             } else {
                 Log::warning("No se generaron archivos para enviar por correo.");
