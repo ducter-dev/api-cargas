@@ -16,6 +16,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('06:01')
             ->timezone('America/Mexico_City')
             ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+        $schedule->command('app:check-files-s3')
+            ->hourlyAt(10)
+            ->timezone('America/Mexico_City')
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
     }
 
     /**
