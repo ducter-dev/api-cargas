@@ -648,13 +648,19 @@ class CargasController extends Controller
     /**
      * Obtiene el inventario de la esfera por jornada
      */
-    public function getInventarioEsferas()
+    public function getInventarioEsferas(Request $request)
     {
         try {
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+                $strReportDay = $fechaCarbon->subDay()->format('Ymd');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+            } else {
+                $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
             $esferas = [1, 2];
             $nombreEsfera = "";
-            $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             $filenames = [];
             // $strReportDay = "20240723";
 
@@ -735,13 +741,21 @@ class CargasController extends Controller
     /**
      * Obtiene el ultimo registro de la jornada anterior, actual y muestra sus diferencias
      */
-    public function getTotalInvEsferas()
+    public function getTotalInvEsferas(Request $request)
     {
         try {
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+
+                $fechaHoy = $fechaCarbon->subDay()->format('Ymd');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $fechaAyer = $fechaCarbon->subDays()->format('Ymd');
+            } else {
+                $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
+                $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
             $esferas = [1, 2];
-            $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
-            $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             $filenames = [];
             // $fechaHoy = "20240724";
             // $fechaAyer = "20240723";
@@ -827,12 +841,19 @@ class CargasController extends Controller
         }
     }
 
-    public function getSellos()
+    public function getSellos(Request $request)
     {
         try {
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
-            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $fecha = $fechaCarbon->subDay()->format('Y-m-d');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+            } else {
+                $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
+
             $filenames = [];
 
             $entradas = DB::connection('mysql')
@@ -920,11 +941,19 @@ class CargasController extends Controller
         }
     }
 
-    public function getCompanias()
+    public function getCompanias(Request $request)
     {
         try {
-            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+
+                $fecha = $fechaCarbon->subDay()->format('Y-m-d');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+            } else {
+                $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
+
             $filenames = [];
 
             DB::connection('mysql')->statement("SET sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''))");
@@ -1004,11 +1033,19 @@ class CargasController extends Controller
         }
     }
 
-    public function getCargasDiarias()
+    public function getCargasDiarias(Request $request)
     {
         try {
-            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+
+                $fecha = $fechaCarbon->subDay()->format('Y-m-d');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+            } else {
+                $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
+
             $filenames = [];
 
             $entradas = DB::connection('mysql')
@@ -1089,11 +1126,19 @@ class CargasController extends Controller
         }
     }
 
-    public function getRDC()
+    public function getRDC(Request $request)
     {
         try {
-            $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-            $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            if($request->fecha){
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+
+                $fecha = $fechaCarbon->subDay()->format('Y-m-d');
+                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+            } else {
+                $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+            }
+
             $filenames = [];
 
             $entradas = DB::connection('mysql')
