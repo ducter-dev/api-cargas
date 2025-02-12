@@ -651,85 +651,113 @@ class CargasController extends Controller
     public function getInventarioEsferas(Request $request)
     {
         try {
-            if($request->fecha){
-                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
+            if ($request->fecha) {
+                $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City');
                 $strReportDay = $fechaCarbon->subDay()->format('Ymd');
                 $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d') . "/irge/";
             }
+
             $esferas = [1, 2];
-            $nombreEsfera = "";
             $filenames = [];
-            // $strReportDay = "20240723";
+            $csvCombined = fopen('php://temp', 'r+');
+            $headersAdded = false;
+
+            // Mapeo de nombres de columnas para diariote_i.csv
+            $columnMappings = [
+                'Fecha' => 'Fecha',
+                'Tiempo' => 'Hora',
+                'VOL_NAT' => 'Barriles_Nat',
+                'VOL_COR' => 'Barriles_20',
+                'MASA' => 'Ton',
+                'DENSIDADNAT' => 'DI_310',
+                'DENSIDADCOR' => 'DI_310_CORR',
+                'TEMP' => 'TI_310',
+                'PRESION' => 'PI_311',
+                'NIVEL' => 'LI_310',
+                'PORCENTAJE' => 'Porcentaje_llenado',
+                'Esfera' => 'Esfera',
+            ];
 
             foreach ($esferas as $tanqueEsferico) {
+                $nombreEsfera = $tanqueEsferico == 1 ? "TE-301A" : "TE-301B";
 
                 $datos = DB::table('ValEsferas')
                     ->select(
-                        'Esfera',
+                        DB::raw("'$nombreEsfera' AS Esfera"),
                         'Fecha',
                         'Tiempo',
-                        'BLSNat as VOL_NAT',
-                        'BLSCor as VOL_COR',
-                        'VolTon as MASA',
-                        'DensidadNat as DENSIDADNAT',
-                        'DensidadCor as DENSIDADCOR',
-                        'Temp as TEMP',
-                        'Presion as PRESION',
-                        'Nivel as NIVEL',
-                        'Porcentaje as PORCENTAJE'
+                        'BLSNat AS VOL_NAT',
+                        'BLSCor AS VOL_COR',
+                        'VolTon AS MASA',
+                        'DensidadNat AS DENSIDADNAT',
+                        'DensidadCor AS DENSIDADCOR',
+                        'Temp AS TEMP',
+                        'Presion AS PRESION',
+                        'Nivel AS NIVEL',
+                        'Porcentaje AS PORCENTAJE'
                     )
                     ->where('Esfera', $tanqueEsferico)
                     ->where('DiaReporte05', $strReportDay)
                     ->orderBy('EntryID', 'asc')
                     ->get()
+                    ->map(function ($item) {
+                        return (array) $item; // Convertir cada resultado a un array asociativo
+                    })
                     ->toArray();
 
-
-                $nombreEsfera = $tanqueEsferico == 1 ? "TE-301A" : "TE-301B";
                 $fileName = 'inventario_esfera_' . $nombreEsfera . '_' . $strReportDay . '.csv';
-                $filenames [] = $fileName;
-                // Crear contenido del CSV en memoria
+                $filenames[] = $fileName;
+
                 $csvContent = fopen('php://temp', 'r+');
 
-                // Encabezados del CSV
-                $headers = [
-                    'Esfera',
-                    'Fecha',
-                    'Tiempo',
-                    'VOL_NAT',
-                    'VOL_COR',
-                    'MASA',
-                    'DENSIDADNAT',
-                    'DENSIDADCOR',
-                    'TEMP',
-                    'PRESION',
-                    'NIVEL',
-                    'PORCENTAJE',
-                ];
+                // Escribir encabezados en los archivos individuales
+                $headers = ['Esfera', 'Fecha', 'Tiempo', 'VOL_NAT', 'VOL_COR', 'MASA',
+                            'DENSIDADNAT', 'DENSIDADCOR', 'TEMP', 'PRESION', 'NIVEL', 'PORCENTAJE'];
                 fputcsv($csvContent, $headers);
 
-                // Agregar los datos al contenido del CSV
-                foreach ($datos as $row) {
-                    fputcsv($csvContent, (array) $row);
+                // Escribir encabezados para diariote_i.csv si aún no se han añadido
+                if (!$headersAdded) {
+                    fputcsv($csvCombined, array_values($columnMappings));
+                    $headersAdded = true;
                 }
 
-                // Rebobinar el contenido del CSV y obtenerlo como string
+                foreach ($datos as $row) {
+                    fputcsv($csvContent, $row);
+
+                    // Preparar datos para diariote_i.csv sin la columna "Esfera"
+                    $filteredRow = [];
+                    foreach (array_keys($columnMappings) as $key) {
+                        $filteredRow[] = $row[$key] ?? ''; // Evita error de clave no definida
+                    }
+                    fputcsv($csvCombined, $filteredRow);
+                }
+
                 rewind($csvContent);
                 $csvOutput = stream_get_contents($csvContent);
                 fclose($csvContent);
 
-                // Guardar el archivo CSV en el storage de Laravel
+                // Guardar en S3
                 Storage::disk('s3')->put($carpeta . $fileName, $csvOutput);
             }
+
+            // Guardar el archivo combinado diariote_i.csv
+            rewind($csvCombined);
+            $csvFinalOutput = stream_get_contents($csvCombined);
+            fclose($csvCombined);
+
+            $finalFileName = 'diarioTE_irge.csv';
+            Storage::disk('s3')->put($carpeta . $finalFileName, $csvFinalOutput);
+            $filenames[] = $finalFileName;
 
             return response()->json([
                 "message" => 'Archivos generados correctamente.',
                 "status" => 200,
                 "files" => $filenames,
             ], 200);
+
         } catch (\Throwable $th) {
             return response()->json([
                 'message' => 'Error al generar el archivo CSV.',
@@ -803,15 +831,15 @@ class CargasController extends Controller
             // Encabezados del CSV
             $headers = [
                 'Esfera',
-                'VolNatAyer',
-                'VolCorAyer',
-                'TonAyer',
-                'VolNatHoy',
-                'VolCorHoy',
-                'TonHoy',
-                'difNat',
-                'difCor',
-                'difTon',
+                'ANT_Barriles Natural',
+                'ANT_Barriles 20',
+                'ANT_Tons',
+                'ACT_Barriles Natural',
+                'ACT_Barriles 20',
+                'ACT_Tons',
+                'DIF_Barriles Natural',
+                'DIF_Barriles 20',
+                'DIF_Tons',
             ];
             fputcsv($csvContent, $headers);
 
