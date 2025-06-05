@@ -24,14 +24,15 @@ class ExecuteFunctionsCSV extends Command
      *
      * @var string
      */
-    protected $description = 'Ejecutar funciones de lunes a viernes a las 6 am';
+    protected $description = 'Ejecutar funciones diariamente a las 6 am';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $date = Carbon::now('America/Mexico_City')->format('Y-m-d H:i:s');
+        // $date = Carbon::now('America/Mexico_City')->format('Y-m-d H:i:s');
+        $date = Carbon::now()->format('Y-m-d H:i:s');
         Log::info("Comando iniciado: $date");
 
         $allFilenames = [];

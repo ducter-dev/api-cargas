@@ -654,10 +654,10 @@ class CargasController extends Controller
             if ($request->fecha) {
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City');
                 $strReportDay = $fechaCarbon->subDay()->format('Ymd');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta ="app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d') . "/irge/";
+                $carpeta ="app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d') . "/irge/";
             }
 
             $esferas = [1, 2];
@@ -776,12 +776,12 @@ class CargasController extends Controller
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
                 $fechaHoy = $fechaCarbon->subDay()->format('Ymd');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta = "app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
                 $fechaAyer = $fechaCarbon->subDays()->format('Ymd');
             } else {
                 $fechaHoy = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
                 $fechaAyer = Carbon::now('America/Mexico_City')->subDays(2)->format('Ymd');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = "app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             }
             $esferas = [1, 2];
             $filenames = [];
@@ -876,10 +876,10 @@ class CargasController extends Controller
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
                 $fecha = $fechaCarbon->subDay()->format('Y-m-d');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta = "app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = "app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             }
 
             $filenames = [];
@@ -976,10 +976,10 @@ class CargasController extends Controller
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
                 $fecha = $fechaCarbon->subDay()->format('Y-m-d');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta = "app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = "app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             }
 
             $filenames = [];
@@ -1068,10 +1068,10 @@ class CargasController extends Controller
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
                 $fecha = $fechaCarbon->subDay()->format('Y-m-d');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta = "app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = "app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             }
 
             $filenames = [];
@@ -1161,10 +1161,10 @@ class CargasController extends Controller
                 $fechaCarbon = Carbon::parse($request->fecha, 'America/Mexico_City'); // Asumiendo que $request->fecha es una cadena de fecha válida
 
                 $fecha = $fechaCarbon->subDay()->format('Y-m-d');
-                $carpeta = $fechaCarbon->format('Y-m-d') . "/irge/";
+                $carpeta = "app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
                 $fecha = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
-                $carpeta = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
+                $carpeta = "app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d')."/irge/";
             }
 
             $filenames = [];
