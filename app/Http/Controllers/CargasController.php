@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class CargasController extends Controller
@@ -656,14 +657,16 @@ class CargasController extends Controller
                 $strReportDay = $fechaCarbon->subDay()->format('Ymd');
                 $carpeta ="app-rri/" . $fechaCarbon->format('Y-m-d') . "/irge/";
             } else {
+                $fechaCarbon = Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d');
                 $strReportDay = Carbon::now('America/Mexico_City')->subDay()->format('Ymd');
-                $carpeta ="app-rri/" . Carbon::now('America/Mexico_City')->subDay()->format('Y-m-d') . "/irge/";
+                $carpeta ="app-rri/" . $fechaCarbon . "/irge/";
             }
 
             $esferas = [1, 2];
             $filenames = [];
             $csvCombined = fopen('php://temp', 'r+');
             $headersAdded = false;
+            $jsonDataRows = [];
 
             // Mapeo de nombres de columnas para diariote_i.csv
             $columnMappings = [
@@ -733,6 +736,12 @@ class CargasController extends Controller
                         $filteredRow[] = $row[$key] ?? ''; // Evita error de clave no definida
                     }
                     fputcsv($csvCombined, $filteredRow);
+
+                    $jsonRow =[];
+                    foreach($columnMappings as $originalKey => $mappedKey){
+                        $jsonRow[$mappedKey] = $row[$originalKey] ?? null;
+                    }
+                    $jsonDataRows[] = $jsonRow;
                 }
 
                 rewind($csvContent);
@@ -751,6 +760,27 @@ class CargasController extends Controller
             $finalFileName = 'diarioTE_irge.csv';
             Storage::disk('s3')->put($carpeta . $finalFileName, $csvFinalOutput);
             $filenames[] = $finalFileName;
+
+            //Enviar info a api
+            $payload = [
+                'date' => $fechaCarbon,
+                'terminal' => 'irge',
+                'data' => $jsonDataRows,
+            ];
+            $responseApi = Http::withHeaders([
+                'app_key' => env('APP_KEY'),
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->post(env('API_URL_SPHERES'), $payload);
+
+            if (!$responseApi->successful()) {
+                return response()->json([
+                    "message" => 'Archivo subido, pero falló al enviar el JSON a la API externa.',
+                    "status" => 500,
+                    "files" => $filenames,
+                    "api_response" => $responseApi->body(),
+                ], 500);
+            }
 
             return response()->json([
                 "message" => 'Archivos generados correctamente.',
