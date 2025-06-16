@@ -13,12 +13,27 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('app:execute-functions-c-s-v')
-            ->dailyAt('06:01')
+            ->dailyAt('07:10')
             ->timezone('America/Mexico_City')
             ->appendOutputTo(storage_path('logs/scheduler.log'));
 
         $schedule->command('app:check-files-s3')
             ->hourlyAt(10)
+            ->timezone('America/Mexico_City')
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+        $schedule->command('app:actualizarllenaderas')
+            ->everyMinute()
+            ->timezone('America/Mexico_City')
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+        $schedule->command('app:actualizar-esferas')
+            ->everyMinute()
+            ->timezone('America/Mexico_City')
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+        $schedule->command('app:inventario-esferas')
+            ->hourlyAt(15)
             ->timezone('America/Mexico_City')
             ->appendOutputTo(storage_path('logs/scheduler.log'));
     }

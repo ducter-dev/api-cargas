@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CargasController;
+use App\Http\Controllers\MonitoreoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,3 +33,7 @@ Route::get('getSellos', [CargasController::class, 'getSellos'])->name('getSellos
 Route::get('getCompanias', [CargasController::class, 'getCompanias'])->name('getCompanias'); # IRGE
 Route::get('getCargasDiarias', [CargasController::class, 'getCargasDiarias'])->name('getCargasDiarias'); # IRGE
 Route::get('getRDC', [CargasController::class, 'getRDC'])->name('getRDC'); # IRGE
+
+Route::post('get_esferas', [MonitoreoController::class, 'get_esferas'])->name('get_esferas');
+Route::post('get_llenaderas', [MonitoreoController::class, 'get_llenaderas'])->name('get_llenaderas');
+Route::get('get_report_esferas', [MonitoreoController::class, 'get_report_esferas'])->name('get_report_esferas');
